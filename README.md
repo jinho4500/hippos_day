@@ -436,6 +436,7 @@ plt.figure(figsize=(12, 7))
 sns.barplot(x=feature_importance[sorted_idx][::-1][:15], y=np.array(test.columns)[sorted_idx][::-1][:15]);
 plt.title('CatBoost Feature Importance');
 ```
+![catboost_feature_importance](https://user-images.githubusercontent.com/39111185/219249324-2cda643a-c0b0-4d94-b9ae-62871a1011d0.png)
 
 ```
 lgbm_feat_imp = []
@@ -447,8 +448,33 @@ plt.figure(figsize=(12, 27))
 sns.barplot(x=feature_importance[sorted_idx][::-1][:], y=np.array(test.columns)[sorted_idx][::-1][:]);
 plt.title('LightGBM Feature Importance');
 ```
+![FeatureImportanceLGbm](https://user-images.githubusercontent.com/39111185/219249362-339aff99-460d-4670-a44c-323d7d7840a3.png)
+
 
 ### Autogluon
 ```
+from autogluon.tabular import TabularDataset, TabularPredictor
 
+dataset = TabularDataset(train.drop(['geometry'], axis=1))
+
+predictor = TabularPredictor(
+    label='MedHouseVal', 
+    problem_type='regression', 
+    eval_metric='rmse'
+    ).fit(
+        dataset, 
+        presets='best_quality',
+num_gpus=1)
+```
+```
+predictor.fit_summary(show_plot=True)
+```
+```
+predictor.get_model_names()
+predictor.get_model_best()
+```
+```
+y_pred2 = predictor.predict(test, model='WeightedEnsemble_L3')
+submission['MedHouseVal'] = y_pred2
+submission.to_csv('submission_WeightedEnsemble_L3.csv', index=False)
 ```
