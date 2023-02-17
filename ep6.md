@@ -18,6 +18,12 @@ submission = pd.read_csv('/content/drive/MyDrive/cloud_share/episode6_data/sampl
 original = pd.read_csv('/content/drive/MyDrive/cloud_share/episode6_data/ParisHousing.csv')
 
 ```
+![data_feat](https://user-images.githubusercontent.com/39111185/219530267-a857edc0-0b75-4d3a-832b-d9aa046dd4ef.png)
+- Independent 16개 Dependent 1개
+
+![개수](https://user-images.githubusercontent.com/39111185/219530527-8b716e3d-7274-4d36-b3f3-29af896eab83.png)
+
+- train data 총 32730개, test data 총 10000개
 
 ## EDA
 ```
@@ -86,6 +92,81 @@ dict = { 2048 : 1000,
 df=df.replace({"garage": dict})
 ```
 
-##전처리후 EDA
+## 전처리후 EDA
 
 ![이상치제거이후](https://user-images.githubusercontent.com/39111185/219528431-9506ea09-1b33-4e8e-8a01-918901c5ac8a.png)
+
+## modeling
+```
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+train = df[~df['price'].isna()]
+test = df[df['price'].isna()].drop(['price'], axis=1)
+
+X = train.drop(['price'], axis=1)
+y = train['price']
+```
+```
+from sklearn.model_selection import KFold
+regs = []
+
+def make_kfold(model):
+  kfolds = KFold(n_splits=5, random_state=1, shuffle=True)
+  for train_idx, val_idx in kfolds.split(train):
+    X_train = X.iloc[train_idx]
+    X_val = X.iloc[val_idx]
+    y_train = y.iloc[train_idx]
+    y_val = y.iloc[val_idx]
+
+    model.fit(X_train, y_train, 
+              early_stopping_rounds=10,
+              eval_set=[(X_train, y_train), (X_val, y_val)],
+              eval_metric='rmse',
+              verbose=100)
+  
+    regs.append(model)
+    
+xgb_params = {
+    'max_depth':4, 
+    'learning_rate':0.25 , 
+    'n_estimators':500, 
+    'objective':'reg:squarederror', 
+    'booster':'gbtree'
+}
+
+from xgboost import XGBRegressor
+
+xgb_reg = XGBRegressor(**xgb_params)
+make_kfold(xgb_reg)
+```
+
+```
+xgb_rmse = []
+for reg in regs[-9:]:
+  xgb_rmse.append(np.sqrt(test_y, reg.predict(test_X)))
+print(f'XGBoost RMSE: {np.mean(xgb_rmse)}')
+```
+
+![rmse_val](https://user-images.githubusercontent.com/39111185/219530045-7a4debc5-548f-4fef-b6f8-8db318b1e112.png)
+
+```
+y_subs = []
+for reg in regs:
+  y_subs.append(reg.predict(test))
+y_sub = np.mean(y_subs, axis=0)
+```
+
+### Feature Importance 
+```
+sns.barplot(x=reg.feature_importances_[1:], y=train_X.columns[1:]);
+```
+![feature_importance](https://user-images.githubusercontent.com/39111185/219529879-1f390552-9b17-414e-beb5-0fec4c87b9e9.png)
+
+
+## submission 제출
+```
+submission['price'] = reg.predict(test)
+submission.to_csv('submission_ep6.csv', index=False)
+```
