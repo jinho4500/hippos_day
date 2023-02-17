@@ -1,0 +1,32 @@
+# episode6
+
+## library install
+```
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+%matplotlib inline
+```
+
+## data load
+```
+train = pd.read_csv('/content/drive/MyDrive/cloud_share/episode6_data/train_episode6.csv', index_col='id')
+test = pd.read_csv('/content/drive/MyDrive/cloud_share/episode6_data/test_episode6.csv', index_col='id')
+submission = pd.read_csv('/content/drive/MyDrive/cloud_share/episode6_data/sample_submission_episode6.csv')
+original = pd.read_csv('/content/drive/MyDrive/cloud_share/episode6_data/ParisHousing.csv')
+
+```
+
+## EDA
+```
+train.hist(figsize=(12, 12));
+test.hist(figsize=(12, 12));
+original.hist(figsize=(12, 12));
+```
+
+
+
+
+## data concat
